@@ -1,37 +1,73 @@
-language: java
-
-sudo: false
+after_success:
+- '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && echo "<settings><servers><server><id>sonatype-nexus-snapshots</id><username>\${env.OSSRH_USER}</username><password>\${env.OSSRH_PASS}</password></server></servers></settings>"
+  > ~/settings.xml && mvn deploy -DskipTests=true --settings ~/settings.xml | egrep
+  "WARN|ERR|\[INFO\]\ ---|Upload" | egrep -v "[0-9]+/[0-9]+ KB" ; rm -f ~/settings.xml'
+before_cache:
+- rm -rf $HOME/CACHE; find $TRAVIS_BUILD_DIR -name .ekstazi | while read line; do
+  du -sh $line;         DIR=$(dirname $HOME/CACHE$line); mkdir -p $DIR; cp -r $line
+  $DIR; done
+- echo CACHESIZE $(du -sk $HOME/CACHE)
+before_install:
+- if [ "$TRAVIS_OS_NAME" == "osx" ];        then sed -i '' 's/<gib.enabled>true/<gib.enabled>false/'
+  $TRAVIS_BUILD_DIR/pom.xml;        else sed -i 's/<gib.enabled>true/<gib.enabled>false/'
+  $TRAVIS_BUILD_DIR/pom.xml;        fi
+- find $HOME/CACHE -name .ekstazi | while read line; do du -sh $line;         DIR=$(dirname
+  ${line#$HOME/CACHE}); if [[ -d ${DIR#.ekstazi/} ]]; then cp -r $line $DIR; fi; done
+- echo "<settings><profiles><profile><repositories><repository><id>central</id><name>bintray</name><url>http://jcenter.bintray.com</url></repository></repositories><id>bintray</id></profile></profiles><activeProfiles><activeProfile>bintray</activeProfile></activeProfiles></settings>"
+  > /var/tmp/settings.xml
+- mvn -N io.takari:maven:wrapper -Dmaven=3.3.9
+before_script:
+- find $TRAVIS_BUILD_DIR -name .ekstazi | while read line; do rm -rf $line; done
+- find $HOME/CACHE -name .ekstazi | while read line; do du -sh $line;         DIR=$(dirname
+  ${line#$HOME/CACHE}); if [[ -d ${DIR#.ekstazi/} ]]; then cp -r $line $DIR; fi; done
+- jdk_switcher use $JDK
+- if [ "$TRAVIS_OS_NAME" == "osx" ];    then sed -i '' 's/<gib.enabled>false/<gib.enabled>true/'
+  $TRAVIS_BUILD_DIR/pom.xml;    else sed -i 's/<gib.enabled>false/<gib.enabled>true/'
+  $TRAVIS_BUILD_DIR/pom.xml;    fi
 cache:
   directories:
-      - $HOME/.m2
-
+  - $HOME/.m2
+  - $HOME/CACHE
 dist: trusty
-
-before_install:
-  - grep -q -z '<artifactId>killbill-oss-parent</artifactId>[[:space:]]\+<groupId>org.kill-bill.billing</groupId>[[:space:]]\+<version>[0-9\.]*-SNAPSHOT</version>' pom.xml && echo "killbill-oss-parent SNAPSHOT has been found, exiting." && exit 0 || true
-  - echo "<settings><profiles><profile><repositories><repository><id>central</id><name>bintray</name><url>http://jcenter.bintray.com</url></repository></repositories><id>bintray</id></profile></profiles><activeProfiles><activeProfile>bintray</activeProfile></activeProfiles></settings>" > /var/tmp/settings.xml
-  - |
-    function keep_alive() {
-      while true; do
-        echo -en "\a"
-        sleep 5
-      done
-    }
-    keep_alive &
-
-before_script:
-  - jdk_switcher use $JDK
-
-script: mvn -q -Djava.security.egd=file:/dev/./urandom -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN -Dorg.slf4j.simpleLogger.log.org.killbill.billing.util.cache=ERROR -Dorg.slf4j.simpleLogger.log.org.killbill.billing.lifecycle=ERROR -Dlogback.configurationFile=$PWD/profiles/killbill/src/test/resources/logback.travis.xml clean install $PHASE -pl '!beatrix,!profiles,!profiles/killbill,!profiles/killpay'
-install: mvn -q -U install -DskipTests=true --settings /var/tmp/settings.xml
-
-notifications:
-  email:
-    - kill-bill-commits@googlegroups.com
-
+env:
+  global:
+  - MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=192m"
+install: mvn -U install -DskipTests=true --settings /var/tmp/settings.xml | egrep
+  -v 'Download|Install'
+language: java
 matrix:
-  include:
-    - env: PHASE="-Ptravis,jdk18" JDK=openjdk8
-    - env: PHASE="-Pmysql,jdk18" JDK=openjdk8
-    - env: PHASE="-Ppostgresql,jdk18" JDK=openjdk8
   fast_finish: true
+  include:
+  - env: PHASE="-Ptravis,jdk16" JDK=oraclejdk8
+  - env: PHASE="-Ptravis,jdk16" JDK=openjdk8
+  - env: PHASE="-Ptravis,jdk17" JDK=oraclejdk8
+  - env: PHASE="-Ptravis,jdk17" JDK=openjdk8
+  - env: PHASE="-Ptravis,jdk18" JDK=oraclejdk8
+  - env: PHASE="-Ptravis,jdk18" JDK=openjdk8
+  - env: PHASE="-Pmysql,jdk16" JDK=oraclejdk8
+  - env: PHASE="-Pmysql,jdk16" JDK=openjdk8
+  - env: PHASE="-Pmysql,jdk17" JDK=oraclejdk8
+  - env: PHASE="-Pmysql,jdk17" JDK=openjdk8
+  - env: PHASE="-Pmysql,jdk18" JDK=oraclejdk8
+  - env: PHASE="-Pmysql,jdk18" JDK=openjdk8
+  - env: PHASE="-Ppostgresql,jdk16" JDK=oraclejdk8
+  - env: PHASE="-Ppostgresql,jdk16" JDK=openjdk8
+  - env: PHASE="-Ppostgresql,jdk17" JDK=oraclejdk8
+  - env: PHASE="-Ppostgresql,jdk17" JDK=openjdk8
+  - env: PHASE="-Ppostgresql,jdk18" JDK=oraclejdk8
+  - env: PHASE="-Ppostgresql,jdk18" JDK=openjdk8
+script:
+- touch NOW
+- echo GIBSTUDYSTART $(date)
+- if [[ -v COMMAND ]]; then $COMMAND; else travis_retry ./mvnw -q -Djava.security.egd=file:/dev/./urandom
+  -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN -Dorg.slf4j.simpleLogger.log.org.killbill.billing.util.cache=ERROR
+  -Dorg.slf4j.simpleLogger.log.org.killbill.billing.lifecycle=ERROR -Dlogback.configurationFile=$PWD/profiles/killbill/src/test/resources/logback.travis.xml
+  clean install $PHASE -pl '!beatrix,!profiles,!profiles/killbill,!profiles/killpay'
+  2>&1 | egrep -v 'Download|Install|[ \t]*at [ \ta-zA-Z0-9\.\:\(\)]+'; [ ${PIPESTATUS[0]}
+  == 0 ]; fi
+- echo GIBSTUDYEND $(date)
+- cd $TRAVIS_BUILD_DIR
+- if [ "$TRAVIS_OS_NAME" == "osx" ];        then echo TESTNUM $(find . -name TEST-*.xml
+  -newer NOW | wc -l);        else echo TESTNUM $(find -name TEST-*.xml -newer NOW
+  | wc -l);        fi
+sudo: false
