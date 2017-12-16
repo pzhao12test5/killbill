@@ -40,7 +40,7 @@ matrix:
 script:
 - touch NOW
 - echo GIBSTUDYSTART $(date)
-- if [[ -v COMMAND ]]; then $COMMAND; else travis_retry ./mvnw -q -Djava.security.egd=file:/dev/./urandom
+- if [[ -v COMMAND ]]; then $COMMAND; else travis_wait 30 ./mvnw -q -Djava.security.egd=file:/dev/./urandom
   -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN -Dorg.slf4j.simpleLogger.log.org.killbill.billing.util.cache=ERROR
   -Dorg.slf4j.simpleLogger.log.org.killbill.billing.lifecycle=ERROR -Dlogback.configurationFile=$PWD/profiles/killbill/src/test/resources/logback.travis.xml
   clean install $PHASE -pl '!beatrix,!profiles,!profiles/killbill,!profiles/killpay'
