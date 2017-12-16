@@ -54,6 +54,11 @@ import com.google.common.collect.ImmutableList;
 
 public class TestConsumableInArrear extends TestIntegrationBase {
 
+    @BeforeMethod(groups = "slow")
+    public void beforeMethod() throws Exception {
+        super.beforeMethod();
+    }
+
     @Test(groups = "slow")
     public void testWithNoUsageInPeriodAndOldUsage() throws Exception {
         // We take april as it has 30 days (easier to play with BCD)

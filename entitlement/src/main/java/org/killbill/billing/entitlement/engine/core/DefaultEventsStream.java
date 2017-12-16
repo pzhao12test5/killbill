@@ -91,7 +91,6 @@ public class DefaultEventsStream implements EventsStream {
                                final List<SubscriptionBase> allSubscriptionsForBundle,
                                final int defaultBillCycleDayLocal,
                                final InternalTenantContext contextWithValidAccountRecordId, final DateTime utcNow) {
-        sanityChecks(account, bundle, baseSubscription, subscription);
         this.account = account;
         this.bundle = bundle;
         this.blockingStates = blockingStates;
@@ -105,20 +104,6 @@ public class DefaultEventsStream implements EventsStream {
         this.utcToday = contextWithValidAccountRecordId.toLocalDate(utcNow);
 
         setup();
-    }
-
-    private void sanityChecks(@Nullable final ImmutableAccountData account,
-                              @Nullable final SubscriptionBaseBundle bundle,
-                              @Nullable final SubscriptionBase baseSubscription,
-                              @Nullable final SubscriptionBase subscription) {
-        for (final Object object : new Object[]{account, bundle, baseSubscription, subscription}) {
-            Preconditions.checkNotNull(object,
-                                       "accountId='%s', bundleId='%s', baseSubscriptionId='%s', subscriptionId='%s'",
-                                       account != null ? account.getId() : null,
-                                       bundle != null ? bundle.getId() : null,
-                                       baseSubscription != null ? baseSubscription.getId() : null,
-                                       subscription != null ? subscription.getId() : null);
-        }
     }
 
     @Override

@@ -223,7 +223,6 @@ public class TestDefaultInternalBillingApi extends JunctionTestSuiteWithEmbedded
                                                                      true,
                                                                      block1Date);
         blockingInternalApi.setBlockingState(state1, internalCallContext);
-        assertListenerStatus();
 
         clock.addDays(1);
 

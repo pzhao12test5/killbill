@@ -108,10 +108,16 @@ public abstract class JunctionTestSuiteWithEmbeddedDB extends GuicyKillbillTestS
         super.beforeMethod();
         startTestFamework();
         this.catalog = initCatalog(catalogService);
+
+        // Make sure we start with a clean state
+        assertListenerStatus();
     }
 
     @AfterMethod(groups = "slow")
     public void afterMethod() throws Exception {
+        // Make sure we finish in a clean state
+        assertListenerStatus();
+
         stopTestFramework();
     }
 
@@ -213,7 +219,6 @@ public abstract class JunctionTestSuiteWithEmbeddedDB extends GuicyKillbillTestS
         return account;
     }
 
-    @Override
     protected void assertListenerStatus() {
         testListener.assertListenerStatus();
     }
