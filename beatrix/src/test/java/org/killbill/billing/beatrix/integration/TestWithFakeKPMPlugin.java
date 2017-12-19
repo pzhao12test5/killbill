@@ -1,6 +1,6 @@
 /*
- * Copyright 2014-2017 Groupon, Inc
- * Copyright 2014-2017 The Billing Project, LLC
+ * Copyright 2014-2015 Groupon, Inc
+ * Copyright 2014-2015 The Billing Project, LLC
  *
  * The Billing Project licenses this file to you under the Apache License, version 2.0
  * (the "License"); you may not use this file except in compliance with the
@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -37,10 +38,12 @@ import org.killbill.billing.notification.plugin.api.ExtBusEventType;
 import org.killbill.billing.osgi.BundleRegistry;
 import org.killbill.billing.osgi.BundleWithConfig;
 import org.killbill.billing.osgi.FileInstall;
+import org.killbill.billing.osgi.PureOSGIBundleFinder;
 import org.killbill.billing.osgi.api.PluginInfo;
 import org.killbill.billing.osgi.api.PluginStateChange;
 import org.killbill.billing.osgi.api.PluginsInfoApi;
 import org.killbill.billing.osgi.api.config.PluginConfig;
+import org.killbill.billing.osgi.api.config.PluginConfigServiceApi;
 import org.killbill.billing.osgi.api.config.PluginLanguage;
 import org.killbill.billing.osgi.api.config.PluginType;
 import org.killbill.billing.osgi.config.OSGIConfig;
@@ -48,6 +51,7 @@ import org.killbill.billing.osgi.pluginconf.PluginConfigException;
 import org.killbill.billing.osgi.pluginconf.PluginFinder;
 import org.killbill.billing.platform.api.KillbillConfigSource;
 import org.killbill.billing.util.jackson.ObjectMapper;
+import org.killbill.billing.util.nodes.KillbillNodesApi;
 import org.killbill.billing.util.nodes.NodeCommand;
 import org.killbill.billing.util.nodes.NodeCommandMetadata;
 import org.killbill.billing.util.nodes.NodeCommandProperty;
@@ -57,10 +61,8 @@ import org.killbill.billing.util.nodes.PluginNodeCommandMetadata;
 import org.killbill.billing.util.nodes.SystemNodeCommandType;
 import org.mockito.Mockito;
 import org.osgi.framework.Bundle;
-import org.osgi.framework.launch.Framework;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -77,10 +79,8 @@ import com.google.inject.Module;
 import com.google.inject.Stage;
 import com.google.inject.util.Modules;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.RETURNS_MOCKS;
-import static org.mockito.Mockito.withSettings;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class TestWithFakeKPMPlugin extends TestIntegrationBase {
 
@@ -226,16 +226,13 @@ public class TestWithFakeKPMPlugin extends TestIntegrationBase {
 
         @Inject
         public FakeBundleRegistry() {
-            super(Mockito.mock(FileInstall.class, withSettings().defaultAnswer(RETURNS_MOCKS)));
+            super(null);
             bundles = new ArrayList<BundleWithMetadata>();
         }
 
-        @Override
-        public void installBundles(final Framework framework) {
-            super.installBundles(framework);
-
+        public void installNewBundle(final String pluginName, @Nullable final String version, final PluginLanguage pluginLanguage) {
             final Bundle bundle = Mockito.mock(Bundle.class);
-            Mockito.when(bundle.getSymbolicName()).thenReturn(NEW_PLUGIN_NAME);
+            Mockito.when(bundle.getSymbolicName()).thenReturn(pluginName);
 
             final BundleWithConfig config = new BundleWithConfig(bundle, new PluginConfig() {
                 @Override
@@ -250,7 +247,7 @@ public class TestWithFakeKPMPlugin extends TestIntegrationBase {
 
                 @Override
                 public String getPluginName() {
-                    return NEW_PLUGIN_NAME;
+                    return pluginName;
                 }
 
                 @Override
@@ -260,7 +257,7 @@ public class TestWithFakeKPMPlugin extends TestIntegrationBase {
 
                 @Override
                 public String getVersion() {
-                    return NEW_PLUGIN_VERSION;
+                    return version;
                 }
 
                 @Override
@@ -275,7 +272,7 @@ public class TestWithFakeKPMPlugin extends TestIntegrationBase {
 
                 @Override
                 public PluginLanguage getPluginLanguage() {
-                    return PluginLanguage.JAVA;
+                    return pluginLanguage;
                 }
 
                 @Override
@@ -299,6 +296,10 @@ public class TestWithFakeKPMPlugin extends TestIntegrationBase {
                 }
             }).orNull();
         }
+
+        public Collection<BundleWithMetadata> getBundles() {
+            return bundles;
+        }
     }
 
     public static class OverrideModuleForOSGI implements Module {
@@ -316,11 +317,15 @@ public class TestWithFakeKPMPlugin extends TestIntegrationBase {
         g.injectMembers(this);
     }
 
-    @BeforeMethod(groups = "slow")
+    @BeforeClass(groups = "slow")
     public void beforeMethod() throws Exception {
-        log.debug("RESET TEST FRAMEWORK");
 
-        cleanupAllTables();
+        try {
+            DBTestingHelper.get().getInstance().cleanupAllTables();
+        } catch (final Exception ignored) {
+        }
+
+        log.debug("RESET TEST FRAMEWORK");
 
         clock.resetDeltaFromReality();
         busHandler.reset();
@@ -330,6 +335,9 @@ public class TestWithFakeKPMPlugin extends TestIntegrationBase {
         externalBus.register(new FakeKPMPlugin());
 
         lifecycle.fireStartupSequencePostEventRegistration();
+
+        // Make sure we start with a clean state
+        assertListenerStatus();
     }
 
     @Test(groups = "slow")

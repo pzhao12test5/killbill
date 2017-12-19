@@ -27,7 +27,6 @@ import javax.cache.spi.CachingProvider;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-import org.ehcache.core.spi.store.InternalCacheManager;
 import org.killbill.billing.util.cache.BaseCacheLoader;
 import org.killbill.billing.util.config.definition.EhCacheConfig;
 import org.slf4j.Logger;
@@ -39,7 +38,6 @@ import com.codahale.metrics.MetricRegistry;
 public class Eh107CacheManagerProvider extends CacheProviderBase implements Provider<CacheManager> {
 
     private static final Logger logger = LoggerFactory.getLogger(Eh107CacheManagerProvider.class);
-    private static final EhcacheLoggingListener ehcacheLoggingListener = new EhcacheLoggingListener();
 
     private final Set<BaseCacheLoader> cacheLoaders;
 
@@ -66,10 +64,6 @@ public class Eh107CacheManagerProvider extends CacheProviderBase implements Prov
             logger.error("Unable to read ehcache.xml, using default configuration", e);
             cacheManager = cachingProvider.getCacheManager();
         }
-
-        // Make sure we start from a clean state - this is mainly useful for tests
-        cacheManager.unwrap(InternalCacheManager.class).deregisterListener(ehcacheLoggingListener);
-        cacheManager.unwrap(InternalCacheManager.class).registerListener(ehcacheLoggingListener);
 
         for (final BaseCacheLoader<?, ?> cacheLoader : cacheLoaders) {
             createCache(cacheManager,
