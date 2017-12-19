@@ -14,7 +14,6 @@ before_install:
   0 || true
 - echo "<settings><profiles><profile><repositories><repository><id>central</id><name>bintray</name><url>http://jcenter.bintray.com</url></repository></repositories><id>bintray</id></profile></profiles><activeProfiles><activeProfile>bintray</activeProfile></activeProfiles></settings>"
   > /var/tmp/settings.xml
-- mvn -N io.takari:maven:wrapper -Dmaven=3.3.9
 before_script:
 - find $TRAVIS_BUILD_DIR -name .ekstazi | while read line; do rm -rf $line; done
 - find $HOME/CACHE -name .ekstazi | while read line; do du -sh $line;         DIR=$(dirname
@@ -28,8 +27,7 @@ cache:
   - $HOME/.m2
   - $HOME/CACHE
 dist: trusty
-install: mvn -U install -DskipTests=true --settings /var/tmp/settings.xml | egrep
-  -v 'Download|Install'
+install: travis_wait mvn -q -U install -DskipTests=true --settings /var/tmp/settings.xml
 language: java
 matrix:
   fast_finish: true
@@ -40,12 +38,10 @@ matrix:
 script:
 - touch NOW
 - echo GIBSTUDYSTART $(date)
-- if [[ -v COMMAND ]]; then $COMMAND; else travis_wait 30 ./mvnw -q -Djava.security.egd=file:/dev/./urandom
-  -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN -Dorg.slf4j.simpleLogger.log.org.killbill.billing.util.cache=ERROR
-  -Dorg.slf4j.simpleLogger.log.org.killbill.billing.lifecycle=ERROR -Dlogback.configurationFile=$PWD/profiles/killbill/src/test/resources/logback.travis.xml
+- travis_wait 30 mvn -q -Djava.security.egd=file:/dev/./urandom -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN
+  -Dorg.slf4j.simpleLogger.log.org.killbill.billing.util.cache=ERROR -Dorg.slf4j.simpleLogger.log.org.killbill.billing.lifecycle=ERROR
+  -Dlogback.configurationFile=$PWD/profiles/killbill/src/test/resources/logback.travis.xml
   clean install $PHASE -pl '!beatrix,!profiles,!profiles/killbill,!profiles/killpay'
-  2>&1 | egrep -v 'Download|Install|[ \t]*at [ \ta-zA-Z0-9\.\:\(\)]+'; [ ${PIPESTATUS[0]}
-  == 0 ]; fi
 - echo GIBSTUDYEND $(date)
 - cd $TRAVIS_BUILD_DIR
 - if [ "$TRAVIS_OS_NAME" == "osx" ];        then echo TESTNUM $(find . -name TEST-*.xml
