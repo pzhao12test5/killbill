@@ -1,7 +1,7 @@
 after_success:
 - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && echo "<settings><servers><server><id>sonatype-nexus-snapshots</id><username>\${env.OSSRH_USER}</username><password>\${env.OSSRH_PASS}</password></server></servers></settings>"
   > ~/settings.xml && mvn deploy -DskipTests=true --settings ~/settings.xml | egrep
-  "WARN|ERR|\[INFO\]\ ---|Upload" | egrep -v "[0-9]+/[0-9]+ KB" ; rm -f ~/settings.xml'
+  "WARN|ERR|\[INFO\]\ ---|Upload" | egrep -v "[0-9]+/[0-9]+ [kK]B" ; rm -f ~/settings.xml'
 before_cache:
 - rm -rf $HOME/CACHE; find $TRAVIS_BUILD_DIR -name .ekstazi | while read line; do
   du -sh $line;         DIR=$(dirname $HOME/CACHE$line); mkdir -p $DIR; cp -r $line
