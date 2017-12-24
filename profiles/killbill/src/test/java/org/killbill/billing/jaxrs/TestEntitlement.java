@@ -22,7 +22,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
@@ -259,20 +258,20 @@ public class TestEntitlement extends TestJaxrsBase {
 
         Assert.assertEquals(subscription.getEvents().size(), 3);
         Assert.assertEquals(subscription.getEvents().get(0).getEventType(), SubscriptionEventType.START_ENTITLEMENT.name());
-        assertMatches(subscription.getEvents().get(0).getPlan(), "shotgun-monthly-[1-9]+");
-        assertMatches(subscription.getEvents().get(0).getPhase(), "shotgun-monthly-[1-9]+-trial");
+        Assert.assertEquals(subscription.getEvents().get(0).getPlan(), "shotgun-monthly-1");
+        Assert.assertEquals(subscription.getEvents().get(0).getPhase(), "shotgun-monthly-1-trial");
         Assert.assertEquals(subscription.getEvents().get(0).getPriceList(), PriceListSet.DEFAULT_PRICELIST_NAME.toString());
         Assert.assertEquals(subscription.getEvents().get(0).getProduct(), "Shotgun");
 
         Assert.assertEquals(subscription.getEvents().get(1).getEventType(), SubscriptionEventType.START_BILLING.name());
-        assertMatches(subscription.getEvents().get(1).getPlan(), "shotgun-monthly-[1-9]+");
-        assertMatches(subscription.getEvents().get(1).getPhase(), "shotgun-monthly-[1-9]+-trial");
+        Assert.assertEquals(subscription.getEvents().get(1).getPlan(), "shotgun-monthly-1");
+        Assert.assertEquals(subscription.getEvents().get(1).getPhase(), "shotgun-monthly-1-trial");
         Assert.assertEquals(subscription.getEvents().get(1).getPriceList(), PriceListSet.DEFAULT_PRICELIST_NAME.toString());
         Assert.assertEquals(subscription.getEvents().get(1).getProduct(), "Shotgun");
 
         Assert.assertEquals(subscription.getEvents().get(2).getEventType(), SubscriptionEventType.PHASE.name());
-        assertMatches(subscription.getEvents().get(2).getPlan(), "shotgun-monthly-[1-9]+");
-        assertMatches(subscription.getEvents().get(2).getPhase(), "shotgun-monthly-[1-9]+-evergreen");
+        Assert.assertEquals(subscription.getEvents().get(2).getPlan(), "shotgun-monthly-1");
+        Assert.assertEquals(subscription.getEvents().get(2).getPhase(), "shotgun-monthly-1-evergreen");
         Assert.assertEquals(subscription.getEvents().get(2).getPriceList(), PriceListSet.DEFAULT_PRICELIST_NAME.toString());
         Assert.assertEquals(subscription.getEvents().get(2).getProduct(), "Shotgun");
 
@@ -298,20 +297,20 @@ public class TestEntitlement extends TestJaxrsBase {
 
         Assert.assertEquals(subscription3.getEvents().size(), 4);
         Assert.assertEquals(subscription3.getEvents().get(0).getEventType(), SubscriptionEventType.START_ENTITLEMENT.name());
-        assertMatches(subscription3.getEvents().get(0).getPlan(), "shotgun-monthly-[1-9]+");
-        assertMatches(subscription3.getEvents().get(0).getPhase(), "shotgun-monthly-[1-9]+-trial");
+        Assert.assertEquals(subscription3.getEvents().get(0).getPlan(), "shotgun-monthly-1");
+        Assert.assertEquals(subscription3.getEvents().get(0).getPhase(), "shotgun-monthly-1-trial");
         Assert.assertEquals(subscription3.getEvents().get(0).getPriceList(), PriceListSet.DEFAULT_PRICELIST_NAME.toString());
         Assert.assertEquals(subscription3.getEvents().get(0).getProduct(), "Shotgun");
 
         Assert.assertEquals(subscription3.getEvents().get(1).getEventType(), SubscriptionEventType.START_BILLING.name());
-        assertMatches(subscription3.getEvents().get(1).getPlan(), "shotgun-monthly-[1-9]+");
-        assertMatches(subscription3.getEvents().get(1).getPhase(), "shotgun-monthly-[1-9]+-trial");
+        Assert.assertEquals(subscription3.getEvents().get(1).getPlan(), "shotgun-monthly-1");
+        Assert.assertEquals(subscription3.getEvents().get(1).getPhase(), "shotgun-monthly-1-trial");
         Assert.assertEquals(subscription3.getEvents().get(1).getPriceList(), PriceListSet.DEFAULT_PRICELIST_NAME.toString());
         Assert.assertEquals(subscription3.getEvents().get(1).getProduct(), "Shotgun");
 
         Assert.assertEquals(subscription3.getEvents().get(2).getEventType(), SubscriptionEventType.PHASE.name());
-        assertMatches(subscription3.getEvents().get(2).getPlan(), "shotgun-monthly-[1-9]+");
-        assertMatches(subscription3.getEvents().get(2).getPhase(), "shotgun-monthly-[1-9]+-evergreen");
+        Assert.assertEquals(subscription3.getEvents().get(2).getPlan(), "shotgun-monthly-1");
+        Assert.assertEquals(subscription3.getEvents().get(2).getPhase(), "shotgun-monthly-1-evergreen");
         Assert.assertEquals(subscription3.getEvents().get(2).getPriceList(), PriceListSet.DEFAULT_PRICELIST_NAME.toString());
         Assert.assertEquals(subscription3.getEvents().get(2).getProduct(), "Shotgun");
 
@@ -320,10 +319,6 @@ public class TestEntitlement extends TestJaxrsBase {
         Assert.assertEquals(subscription3.getEvents().get(3).getPhase(), "pistol-monthly-evergreen");
         Assert.assertEquals(subscription3.getEvents().get(3).getPriceList(), PriceListSet.DEFAULT_PRICELIST_NAME.toString());
         Assert.assertEquals(subscription3.getEvents().get(3).getProduct(), "Pistol");
-    }
-
-    private void assertMatches(final String actual, final String regexp) {
-        Assert.assertTrue(Pattern.compile(regexp).matcher(actual).matches(), String.format("%s doesn't match pattern %s", actual, regexp));
     }
 
     @Test(groups = "slow", description = "Create a base entitlement and also addOns entitlements under the same bundle")

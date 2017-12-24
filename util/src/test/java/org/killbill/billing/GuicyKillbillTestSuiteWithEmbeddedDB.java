@@ -24,7 +24,6 @@ import org.killbill.commons.embeddeddb.EmbeddedDB;
 import org.skife.jdbi.v2.IDBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
@@ -53,16 +52,11 @@ public class GuicyKillbillTestSuiteWithEmbeddedDB extends GuicyKillbillTestSuite
 
     @BeforeMethod(groups = "slow")
     public void beforeMethod() throws Exception {
-        cleanupAllTables();
-        controlCacheDispatcher.clearAll();
-    }
-
-    protected void cleanupAllTables() {
         try {
             DBTestingHelper.get().getInstance().cleanupAllTables();
-        } catch (final Exception e) {
-            Assert.fail("Unable to clean database", e);
+        } catch (final Exception ignored) {
         }
+        controlCacheDispatcher.clearAll();
     }
 
     @AfterSuite(groups = "slow")

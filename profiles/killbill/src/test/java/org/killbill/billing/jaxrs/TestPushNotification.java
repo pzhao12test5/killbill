@@ -1,7 +1,7 @@
 /*
  * Copyright 2010-2013 Ning, Inc.
- * Copyright 2014-2017 Groupon, Inc
- * Copyright 2014-2017 The Billing Project, LLC
+ * Copyright 2014-2015 Groupon, Inc
+ * Copyright 2014-2015 The Billing Project, LLC
  *
  * The Billing Project licenses this file to you under the Apache License, version 2.0
  * (the "License"); you may not use this file except in compliance with the
@@ -74,16 +74,8 @@ public class TestPushNotification extends TestJaxrsBase {
         callbackServer.stopServer();
     }
 
-    private void assertAllCallbacksCompleted() throws InterruptedException {
-        final boolean waitForCallbacksToComplete = waitForCallbacksToComplete();
-        if (!waitForCallbacksToComplete) {
-            printThreadDump();
-        }
-        Assert.assertTrue(waitForCallbacksToComplete, "Fail to see push notification callbacks");
-    }
-
     private boolean waitForCallbacksToComplete() throws InterruptedException {
-        long remainingMs = DEFAULT_REQUEST_TIMEOUT_SEC * 1000;
+        long remainingMs = 30000;
         do {
             if (callbackCompleted) {
                 break;
@@ -115,7 +107,10 @@ public class TestPushNotification extends TestJaxrsBase {
         // Create account to trigger a push notification
         createAccount();
 
-        assertAllCallbacksCompleted();
+        final boolean success = waitForCallbacksToComplete();
+        if (!success) {
+            Assert.fail("Fail to see push notification callbacks after 5 sec");
+        }
 
         if (callbackCompletedWithError) {
             Assert.fail("Assertion during callback failed...");
@@ -140,7 +135,7 @@ public class TestPushNotification extends TestJaxrsBase {
         final String callback = "http://127.0.0.1:" + SERVER_PORT + CALLBACK_ENDPOINT;
         final TenantKey result0 = killBillClient.registerCallbackNotificationForTenant(callback, requestOptions);
 
-        assertAllCallbacksCompleted();
+        Assert.assertTrue(waitForCallbacksToComplete());
         Assert.assertTrue(callbackCompletedWithError); // expected true because is not an ACCOUNT_CREATION event
 
         Assert.assertEquals(result0.getKey(), TenantKV.TenantKey.PUSH_NOTIFICATION_CB.toString());
@@ -172,7 +167,7 @@ public class TestPushNotification extends TestJaxrsBase {
         // Create account to trigger a push notification
         createAccount();
 
-        assertAllCallbacksCompleted();
+        Assert.assertTrue(waitForCallbacksToComplete());
         Assert.assertTrue(callbackCompletedWithError);
 
         resetCallbackStatusProperties();
@@ -180,7 +175,7 @@ public class TestPushNotification extends TestJaxrsBase {
         // move clock 15 minutes and get 1st retry
         clock.addDeltaFromReality(900000);
 
-        assertAllCallbacksCompleted();
+        Assert.assertTrue(waitForCallbacksToComplete());
         Assert.assertTrue(callbackCompletedWithError);
 
         resetCallbackStatusProperties();
@@ -188,7 +183,7 @@ public class TestPushNotification extends TestJaxrsBase {
         // move clock an hour and get 2nd retry
         clock.addDeltaFromReality(3600000);
 
-        assertAllCallbacksCompleted();
+        Assert.assertTrue(waitForCallbacksToComplete());
         Assert.assertTrue(callbackCompletedWithError);
 
         resetCallbackStatusProperties();
@@ -199,7 +194,7 @@ public class TestPushNotification extends TestJaxrsBase {
         // move clock a day, get 3rd retry and wait for a success push notification
         clock.addDays(1);
 
-        assertAllCallbacksCompleted();
+        Assert.assertTrue(waitForCallbacksToComplete());
         Assert.assertFalse(callbackCompletedWithError);
 
         unregisterTenantForCallback(callback);
@@ -226,7 +221,7 @@ public class TestPushNotification extends TestJaxrsBase {
         // Create account to trigger a push notification
         createAccount();
 
-        assertAllCallbacksCompleted();
+        Assert.assertTrue(waitForCallbacksToComplete());
         Assert.assertTrue(callbackCompletedWithError);
 
         resetCallbackStatusProperties();
@@ -234,7 +229,7 @@ public class TestPushNotification extends TestJaxrsBase {
         // move clock 15 minutes and get 1st retry
         clock.addDeltaFromReality(900000);
 
-        assertAllCallbacksCompleted();
+        Assert.assertTrue(waitForCallbacksToComplete());
         Assert.assertTrue(callbackCompletedWithError);
 
         resetCallbackStatusProperties();
@@ -242,7 +237,7 @@ public class TestPushNotification extends TestJaxrsBase {
         // move clock an hour and get 2nd retry
         clock.addDeltaFromReality(3600000);
 
-        assertAllCallbacksCompleted();
+        Assert.assertTrue(waitForCallbacksToComplete());
         Assert.assertTrue(callbackCompletedWithError);
 
         resetCallbackStatusProperties();
@@ -250,7 +245,7 @@ public class TestPushNotification extends TestJaxrsBase {
         // move clock a day and get 3rd retry
         clock.addDays(1);
 
-        assertAllCallbacksCompleted();
+        Assert.assertTrue(waitForCallbacksToComplete());
         Assert.assertTrue(callbackCompletedWithError);
 
         resetCallbackStatusProperties();
@@ -258,7 +253,7 @@ public class TestPushNotification extends TestJaxrsBase {
         // move clock a day and get 4rd retry
         clock.addDays(2);
 
-        assertAllCallbacksCompleted();
+        Assert.assertTrue(waitForCallbacksToComplete());
         Assert.assertTrue(callbackCompletedWithError);
         resetCallbackStatusProperties();
 
